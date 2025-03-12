@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import cv2
 import tensorflow as tf
-import base64
 from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 
@@ -23,10 +22,11 @@ os.makedirs(MASK_FOLDER, exist_ok=True)
 lesion_data = pd.read_csv(CSV_FILE)
 
 def generate_mask(image_path):
+    """Generates a segmentation mask for the input image."""
     img = cv2.imread(image_path, cv2.IMREAD_COLOR)
     if img is None:
         return None, None
-    
+
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  
     img = cv2.resize(img, (224, 224))
     img = img / 255.0  
@@ -41,18 +41,16 @@ def generate_mask(image_path):
 
     return mask_path, mask
 
-def image_to_base64(image_path):
-    with open(image_path, "rb") as img_file:
-        return base64.b64encode(img_file.read()).decode("utf-8")
-
 def calculate_lesion_coverage(mask):
+    """Calculates lesion coverage percentage with 4 decimal places."""
     if mask is None:
         return None
     total_pixels = mask.size
     lesion_pixels = np.count_nonzero(mask)
-    return round(lesion_pixels / total_pixels, 2)
+    return round(lesion_pixels / total_pixels, 4)  # 4 decimal places
 
 def find_nearest_class(lesion_coverage):
+    """Finds the closest matching class from CSV."""
     if lesion_coverage is None:
         return "Unknown"
     lesion_data["Diff"] = abs(lesion_data["Lesion Coverage"] - lesion_coverage)
@@ -61,6 +59,7 @@ def find_nearest_class(lesion_coverage):
 
 @app.route("/predict", methods=["POST"])
 def predict():
+    """Handles the prediction API request."""
     if "image" not in request.files:
         return jsonify({"error": "No image provided"}), 400
 
@@ -81,12 +80,10 @@ def predict():
     lesion_coverage = calculate_lesion_coverage(mask)
     predicted_class = find_nearest_class(lesion_coverage)
 
-    base64_mask = image_to_base64(mask_path) if os.path.exists(mask_path) else None
-
     return jsonify({
-        "Lesion Coverage": lesion_coverage,
+        "Lesion Coverage": lesion_coverage,  # 4 decimal places
         "Predicted Class": predicted_class,
-        "Mask Image (Base64)": base64_mask
+        "Mask Image Path": mask_path  # Direct file path instead of Base64
     })
 
 if __name__ == "__main__":
