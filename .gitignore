@@ -1,0 +1,21 @@
+# Ignore model files
+*.h5
+*.model
+*.pth
+*.ckpt
+
+# Ignore saved models directory (if using TensorFlow/Keras)
+saved_model/
+
+# Ignore logs and checkpoints
+checkpoint
+checkpoints/
+logs/
+tensorboard_logs/
+
+# Ignore dataset cache
+__pycache__/
+*.pkl
+*.npz
+*.npy
+.DS_Store
