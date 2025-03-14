@@ -3,6 +3,7 @@
 *.model
 *.pth
 *.ckpt
+*.keras
 
 # Ignore saved models directory (if using TensorFlow/Keras)
 saved_model/
@@ -19,3 +20,5 @@ __pycache__/
 *.npz
 *.npy
 .DS_Store
+Masks
+# assets

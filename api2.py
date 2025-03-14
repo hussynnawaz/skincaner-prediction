@@ -7,7 +7,17 @@ from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 
 # Load model
-model = tf.keras.models.load_model("model_densenet.h5")
+import tensorflow as tf
+from keras.saving import register_keras_serializable
+
+@register_keras_serializable()
+def dice_coefficient(y_true, y_pred, smooth=1e-6):
+    intersection = tf.reduce_sum(y_true * y_pred)
+    return (2. * intersection + smooth) / (tf.reduce_sum(y_true) + tf.reduce_sum(y_pred) + smooth)
+
+# Load model with custom object
+model = tf.keras.models.load_model("skin-cancer-segmentation.keras", custom_objects={"dice_coefficient": dice_coefficient})
+
 
 # Flask app
 app = Flask(__name__)
@@ -28,7 +38,7 @@ def generate_mask(image_path):
         return None, None
 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  
-    img = cv2.resize(img, (224, 224))
+    img = cv2.resize(img, (256, 256))
     img = img / 255.0  
     img = np.expand_dims(img, axis=0)
 
